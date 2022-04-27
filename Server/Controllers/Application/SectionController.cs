@@ -70,15 +70,79 @@ namespace SWARM.Server.Controllers.Application
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] Section _Item)
+        //NEED TO TEST
+        public async Task<IActionResult> Post([FromBody] Section _Section)
         {
-            throw new NotImplementedException();
+            var trans = _context.Database.BeginTransaction();
+            try
+            {
+                var newSection = await _context.Sections.Where(x => x.SectionId == _Section.SectionId).FirstOrDefaultAsync();
+
+                if (newSection != null)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError);
+                }
+
+                newSection = new Section();
+                newSection.CourseNo = _Section.CourseNo;
+                newSection.SectionNo = _Section.SectionNo;
+                newSection.StartDateTime = _Section.StartDateTime;
+                newSection.Location = _Section.Location;
+                newSection.InstructorId = _Section.InstructorId;
+                newSection.Capacity = _Section.Capacity;
+                newSection.SchoolId = _Section.SchoolId;
+
+                _context.Add(newSection);
+                await _context.SaveChangesAsync();
+                trans.Commit();
+
+                return Ok(_Section.SectionId);
+            }
+            catch (Exception ex)
+            {
+                trans.Rollback();
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
         [HttpPut]
-        public async Task<IActionResult> Put([FromBody] Section _Item)
+        //NEED TO TEST
+        public async Task<IActionResult> Put([FromBody] Section _Section)
         {
-            throw new NotImplementedException();
+            bool exists = false;
+            var trans = _context.Database.BeginTransaction();
+            try
+            {
+                var existSection = await _context.Sections.Where(x => x.SectionId == _Section.SectionId).FirstOrDefaultAsync();
+
+                if (existSection == null)
+                    existSection = new Section();
+                else
+                    exists = true;
+
+                existSection.CourseNo = _Section.CourseNo;
+                existSection.SectionNo = _Section.SectionNo;
+                existSection.StartDateTime = _Section.StartDateTime;
+                existSection.Location = _Section.Location;
+                existSection.InstructorId = _Section.InstructorId;
+                existSection.Capacity = _Section.Capacity;
+                existSection.SchoolId = _Section.SchoolId;
+
+                if (exists)
+                    _context.Update(existSection);
+                else
+                    _context.Add(existSection);
+
+                await _context.SaveChangesAsync();
+                trans.Commit();
+
+                return Ok(_Section.SectionId);
+            }
+            catch (Exception ex)
+            {
+                trans.Rollback();
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
     }
 }
