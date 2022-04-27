@@ -21,9 +21,28 @@ namespace SWARM.Server.Controllers.Application
         }
 
         [HttpDelete]
-        public Task<IActionResult> Delete(int itemID)
+        [Route("DeleteSection/{pSectionId}")]
+        public async Task<IActionResult> Delete(int pSectionId)
         {
-            throw new NotImplementedException();
+            var trans = _context.Database.BeginTransaction();
+            try
+            {
+                Section itmSection = await _context.Sections.Where(x => x.SectionId == pSectionId).FirstOrDefaultAsync();
+                
+                deleteEnrollments(itmSection);
+                deleteGrades(itmSection);
+                deleteGradeTypeWeights(itmSection);
+                
+                _context.Remove(itmSection);
+                await _context.SaveChangesAsync();
+                //trans.Commit();
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                trans.Rollback();
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
         [HttpGet]
@@ -43,19 +62,21 @@ namespace SWARM.Server.Controllers.Application
         }
 
         [HttpGet]
-        public Task<IActionResult> Get()
+        [Route("GetSections")]
+        public async Task<IActionResult> Get()
         {
-            throw new NotImplementedException();
+            List<Section> lstSections = await _context.Sections.ToListAsync();
+            return Ok(lstSections);
         }
 
         [HttpPost]
-        public Task<IActionResult> Post([FromBody] Section _Item)
+        public async Task<IActionResult> Post([FromBody] Section _Item)
         {
             throw new NotImplementedException();
         }
 
         [HttpPut]
-        public Task<IActionResult> Put([FromBody] Section _Item)
+        public async Task<IActionResult> Put([FromBody] Section _Item)
         {
             throw new NotImplementedException();
         }

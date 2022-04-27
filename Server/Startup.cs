@@ -35,6 +35,9 @@ namespace SWARM.Server
                 options.UseOracle(
                     Configuration.GetConnectionString("SwarmOracleConnection")));
 
+            services.AddControllers().AddNewtonsoftJson(options =>
+                    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
+
             services.AddDatabaseDeveloperPageExceptionFilter();
 
             services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)

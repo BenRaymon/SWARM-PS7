@@ -58,31 +58,13 @@ namespace SWARM.Server.Controllers.Application
                     .Where(x => x.Course.CourseNo == pCourseNo).ToListAsync();
                 foreach (var sec in sections)
                 {
-                    var enrollment = await _context.Enrollments
-                        .Where(x => x.SectionId == sec.SectionId).ToListAsync();
-                    foreach (var enr in enrollment)
-                    {
-                        _context.Enrollments.Remove(enr);
-                    }
-
-                    var grades = await _context.Grades
-                        .Where(x => x.SectionId == sec.SectionId).ToListAsync();
-                    foreach(var grade in grades)
-                    {
-                        _context.Grades.Remove(grade);
-                    }
-
-                    var grade_type_weights = await _context.GradeTypeWeights
-                        .Where(x => x.SectionId == sec.SectionId).ToListAsync();
-                    foreach (var gtw in grade_type_weights)
-                    {
-                        _context.GradeTypeWeights.Remove(gtw);
-                    }
+                    deleteEnrollments(sec);
+                    deleteGrades(sec);
+                    deleteGradeTypeWeights(sec);
 
                     _context.Sections.Remove(sec);
                 }
 
-                
                 var _Prereqs = await _context.Courses.Where(x => x.Prerequisite == pCourseNo).ToListAsync();
                 foreach (var prereq in _Prereqs)
                 {
@@ -95,6 +77,7 @@ namespace SWARM.Server.Controllers.Application
                 Course itmCourse = await _context.Courses.Where(x => x.CourseNo == pCourseNo).FirstOrDefaultAsync();
                 _context.Remove(itmCourse);
                 await _context.SaveChangesAsync();
+                //trans.Commit();
                 return Ok();
             }
             catch (Exception ex)
