@@ -11,7 +11,7 @@ namespace SWARM.Server.Controllers.Base
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
+    [Authorize]
     public class BaseController<T> : Controller
     {
         protected readonly SWARMOracleContext _context;

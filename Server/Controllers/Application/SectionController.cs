@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SWARM.EF.Data;
 using SWARM.EF.Models;
 using SWARM.Server.Controllers.Base;
@@ -26,9 +27,19 @@ namespace SWARM.Server.Controllers.Application
         }
 
         [HttpGet]
-        public Task<IActionResult> Get(int itemID)
+        [Route("GetSection/{pSectionId}")]
+        public async Task<IActionResult> Get(int pSectionId)
         {
-            throw new NotImplementedException();
+            Section itmSection = await _context.Sections.Where(x => x.SectionId == pSectionId).FirstOrDefaultAsync();
+            return Ok(itmSection);
+        }
+
+        [HttpGet]
+        [Route("GetSections/{pCourseNo}")]
+        public async Task<IActionResult> GetSectionsByCourse(int pCourseNo)
+        {
+            List<Section> lstSections = await _context.Sections.Where(x => x.CourseNo == pCourseNo).ToListAsync();
+            return Ok(lstSections);
         }
 
         [HttpGet]
