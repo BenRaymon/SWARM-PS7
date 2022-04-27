@@ -25,34 +25,62 @@ namespace SWARM.Server.Controllers.Base
             this._httpContextAccessor = httpContextAccessor;
         }
 
-        public async void deleteEnrollments(Section sec)
+        public async void DeleteEnrollments(Section sec)
         {
-            var enrollment = await _context.Enrollments
-                        .Where(x => x.SectionId == sec.SectionId).ToListAsync();
-            foreach (var enr in enrollment)
+            try
             {
-                _context.Enrollments.Remove(enr);
+                var enrollment = await _context.Enrollments
+                        .Where(x => x.SectionId == sec.SectionId).ToListAsync();
+                foreach (var enr in enrollment)
+                {
+                    _context.Enrollments.Remove(enr);
+                }
             }
+            catch (Exception ex){}
         }
 
-        public async void deleteGrades(Section sec)
+        public async void DeleteGrades(Section sec)
         {
-            var grades = await _context.Grades
-                        .Where(x => x.SectionId == sec.SectionId).ToListAsync();
-            foreach (var grade in grades)
+            try
             {
-                _context.Grades.Remove(grade);
+                var grades = await _context.Grades
+                        .Where(x => x.SectionId == sec.SectionId).ToListAsync();
+                foreach (var grade in grades)
+                {
+                    _context.Grades.Remove(grade);
+                }
             }
+            catch (Exception ex) { }
+            
         }
 
-        public async void deleteGradeTypeWeights(Section sec)
+        public async void DeleteGrades(int pStudentId, int pSectionId)
         {
-            var grade_type_weights = await _context.GradeTypeWeights
-                        .Where(x => x.SectionId == sec.SectionId).ToListAsync();
-            foreach (var gtw in grade_type_weights)
+            try
             {
-                _context.GradeTypeWeights.Remove(gtw);
+                var grades = await _context.Grades
+                        .Where(x => x.SectionId == pSectionId && x.StudentId == pStudentId).ToListAsync();
+                foreach (var grade in grades)
+                {
+                    _context.Grades.Remove(grade);
+                }
             }
+            catch (Exception ex) { }
+            
+        }
+
+        public async void DeleteGradeTypeWeights(Section sec)
+        {
+            try
+            {
+                var grade_type_weights = await _context.GradeTypeWeights
+                            .Where(x => x.SectionId == sec.SectionId).ToListAsync();
+                foreach (var gtw in grade_type_weights)
+                {
+                    _context.GradeTypeWeights.Remove(gtw);
+                }
+            }
+            catch (Exception ex) { }
         }
     }
 }

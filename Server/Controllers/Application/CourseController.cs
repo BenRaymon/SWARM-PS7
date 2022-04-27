@@ -58,9 +58,9 @@ namespace SWARM.Server.Controllers.Application
                     .Where(x => x.Course.CourseNo == pCourseNo).ToListAsync();
                 foreach (var sec in sections)
                 {
-                    deleteEnrollments(sec);
-                    deleteGrades(sec);
-                    deleteGradeTypeWeights(sec);
+                    DeleteEnrollments(sec);
+                    DeleteGrades(sec);
+                    DeleteGradeTypeWeights(sec);
 
                     _context.Sections.Remove(sec);
                 }

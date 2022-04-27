@@ -29,9 +29,9 @@ namespace SWARM.Server.Controllers.Application
             {
                 Section itmSection = await _context.Sections.Where(x => x.SectionId == pSectionId).FirstOrDefaultAsync();
                 
-                deleteEnrollments(itmSection);
-                deleteGrades(itmSection);
-                deleteGradeTypeWeights(itmSection);
+                DeleteEnrollments(itmSection);
+                DeleteGrades(itmSection);
+                DeleteGradeTypeWeights(itmSection);
                 
                 _context.Remove(itmSection);
                 await _context.SaveChangesAsync();

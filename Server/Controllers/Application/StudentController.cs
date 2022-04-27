@@ -33,15 +33,13 @@ namespace SWARM.Server.Controllers.Application
                     .Where(x => x.StudentId == pStudentId).ToListAsync();
                 foreach (var enr in enrollment)
                 {
-                    Section sec = await _context.Sections.Where(x => x.SectionId == enr.SectionId).FirstOrDefaultAsync();
-                    deleteGrades(sec);
-
+                    DeleteGrades(enr.StudentId, enr.SectionId);
                     _context.Enrollments.Remove(enr);
                 }
 
                 _context.Remove(itmStudent);
                 await _context.SaveChangesAsync();
-                //trans.Commit();
+                trans.Commit();
                 return Ok();
             }
             catch (Exception ex)
@@ -69,7 +67,6 @@ namespace SWARM.Server.Controllers.Application
         }
 
         [HttpPost]
-        //NEED TO TEST
         public async Task<IActionResult> Post([FromBody] Student _Student)
         {
             var trans = _context.Database.BeginTransaction();
@@ -107,7 +104,6 @@ namespace SWARM.Server.Controllers.Application
         }
 
         [HttpPut]
-        //NEED TO TEST
         public async Task<IActionResult> Put([FromBody] Student _Student)
         {
             bool exists = false;
