@@ -55,27 +55,87 @@ namespace SWARM.Server.Controllers.Application
         [Route("GetEnrollmentsByStudent/{pStudentId}")]
         public async Task<IActionResult> GetByStudentId(int pStudentId)
         {
-            List<Enrollment> lstEnr = await _context.Enrollments.Where(x => x.StudentId == pStudentId).ToListAsync();
-            return Ok(lstEnr);
+            List<Enrollment> lstEnrollments = await _context.Enrollments.Where(x => x.StudentId == pStudentId).ToListAsync();
+            return Ok(lstEnrollments);
         }
 
         [HttpGet]
         [Route("GetEnrollments")]
         public async Task<IActionResult> Get()
         {
-            List<Enrollment> lstEnr = await _context.Enrollments.ToListAsync();
-            return Ok(lstEnr);
+            List<Enrollment> lstEnrollments = await _context.Enrollments.ToListAsync();
+            return Ok(lstEnrollments);
         }
 
-        public Task<IActionResult> Post([FromBody] Enrollment _Enrollment)
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody] Enrollment _Enrollment)
         {
-            throw new NotImplementedException();
+            var trans = _context.Database.BeginTransaction();
+            try
+            {
+                var newEnrollment = await _context.Enrollments.Where(x => x.SectionId == _Enrollment.SectionId && x.StudentId == _Enrollment.StudentId).FirstOrDefaultAsync();
+
+                if (newEnrollment != null)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError);
+                }
+
+                newEnrollment = new Enrollment();
+                newEnrollment.StudentId = _Enrollment.StudentId;
+                newEnrollment.SectionId = _Enrollment.SectionId;
+                newEnrollment.EnrollDate = _Enrollment.EnrollDate;
+                newEnrollment.FinalGrade = _Enrollment.FinalGrade;
+                newEnrollment.SchoolId = _Enrollment.SchoolId;
+
+                _context.Add(newEnrollment);
+                await _context.SaveChangesAsync();
+                trans.Commit();
+
+                return Ok(_Enrollment.StudentId);
+            }
+            catch (Exception ex)
+            {
+                trans.Rollback();
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
         
-        public Task<IActionResult> Put([FromBody] Enrollment _Enrollment)
+        [HttpPut]
+        public async Task<IActionResult> Put([FromBody] Enrollment _Enrollment)
         {
-            throw new NotImplementedException();
+            bool exists = false;
+            var trans = _context.Database.BeginTransaction();
+            try
+            {
+                var existEnrollment = await _context.Enrollments.Where(x => x.SectionId == _Enrollment.SectionId && x.StudentId == _Enrollment.StudentId).FirstOrDefaultAsync();
+
+                if (existEnrollment == null)
+                    existEnrollment = new Enrollment();
+                else
+                    exists = true;
+
+                existEnrollment.StudentId = _Enrollment.StudentId;
+                existEnrollment.SectionId = _Enrollment.SectionId;
+                existEnrollment.EnrollDate = _Enrollment.EnrollDate;
+                existEnrollment.FinalGrade = _Enrollment.FinalGrade;
+                existEnrollment.SchoolId = _Enrollment.SchoolId;
+
+                if (exists)
+                    _context.Update(existEnrollment);
+                else
+                    _context.Add(existEnrollment);
+
+                await _context.SaveChangesAsync();
+                trans.Commit();
+
+                return Ok(_Enrollment.StudentId);
+            }
+            catch (Exception ex)
+            {
+                trans.Rollback();
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
 
