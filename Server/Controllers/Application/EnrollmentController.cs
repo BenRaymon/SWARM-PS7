@@ -28,7 +28,10 @@ namespace SWARM.Server.Controllers.Application
             try
             {
                 
-                Enrollment itmEnr = await _context.Enrollments.Where(x => x.StudentId == pStudentId && x.SectionId == pSectionId).FirstOrDefaultAsync();
+                Enrollment itmEnr = await _context.Enrollments
+                                        .Where(x => x.StudentId == pStudentId && x.SectionId == pSectionId)
+                                        .FirstOrDefaultAsync();
+
                 DeleteGrades(pStudentId, pSectionId);
 
                 _context.Remove(itmEnr);
@@ -47,7 +50,9 @@ namespace SWARM.Server.Controllers.Application
         [Route("GetEnrollment/{pStudentId}/{pSectionId}")]
         public async Task<IActionResult> Get(int pStudentId, int pSectionId)
         {
-            Enrollment itmEnr = await _context.Enrollments.Where(x => x.StudentId == pStudentId && x.SectionId == pSectionId).FirstOrDefaultAsync();
+            Enrollment itmEnr = await _context.Enrollments
+                                    .Where(x => x.StudentId == pStudentId && x.SectionId == pSectionId)
+                                    .FirstOrDefaultAsync();
             return Ok(itmEnr);
         }
 
@@ -73,7 +78,9 @@ namespace SWARM.Server.Controllers.Application
             var trans = _context.Database.BeginTransaction();
             try
             {
-                var newEnrollment = await _context.Enrollments.Where(x => x.SectionId == _Enrollment.SectionId && x.StudentId == _Enrollment.StudentId).FirstOrDefaultAsync();
+                var newEnrollment = await _context.Enrollments
+                                        .Where(x => x.SectionId == _Enrollment.SectionId && x.StudentId == _Enrollment.StudentId)
+                                        .FirstOrDefaultAsync();
 
                 if (newEnrollment != null)
                 {
@@ -108,7 +115,9 @@ namespace SWARM.Server.Controllers.Application
             var trans = _context.Database.BeginTransaction();
             try
             {
-                var existEnrollment = await _context.Enrollments.Where(x => x.SectionId == _Enrollment.SectionId && x.StudentId == _Enrollment.StudentId).FirstOrDefaultAsync();
+                var existEnrollment = await _context.Enrollments
+                                        .Where(x => x.SectionId == _Enrollment.SectionId && x.StudentId == _Enrollment.StudentId)
+                                        .FirstOrDefaultAsync();
 
                 if (existEnrollment == null)
                     existEnrollment = new Enrollment();
