@@ -30,9 +30,15 @@ namespace SWARM.Server.Controllers.Application
                 Zipcode itmZip = await _context.Zipcodes.Where(x => x.Zip == pZip).FirstOrDefaultAsync();
                 //ZIP IS A NOT-NULL FK IN INSTRUCTOR - CANNOT DELETE WITHOUT VIOLATING FK CONSTRAINT
 
+                if(itmZip == null)
+                {
+                    trans.Rollback();
+                    return StatusCode(StatusCodes.Status404NotFound);
+                }
+
                 _context.Remove(itmZip);
                 await _context.SaveChangesAsync();
-                //trans.Commit();
+                trans.Commit();
                 return Ok();
 
             }
@@ -49,7 +55,11 @@ namespace SWARM.Server.Controllers.Application
         public async Task<IActionResult> Get(string pZip)
         {
             Zipcode itmZip = await _context.Zipcodes.Where(x => x.Zip == pZip).FirstOrDefaultAsync();
-            return Ok(itmZip);
+            
+            if(itmZip == null)
+                return StatusCode(StatusCodes.Status404NotFound);
+            else
+                return Ok(itmZip);
         }
 
         [HttpGet]
@@ -60,14 +70,69 @@ namespace SWARM.Server.Controllers.Application
             return Ok(lstZips);
         }
 
-        public async Task<IActionResult> Post([FromBody] Zipcode _Item)
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody] Zipcode _Zip)
         {
-            throw new NotImplementedException();
+            var trans = _context.Database.BeginTransaction();
+            try
+            {
+                var newZip = await _context.Zipcodes.Where(x => x.Zip == _Zip.Zip).FirstOrDefaultAsync();
+
+                if (newZip != null)
+                    return StatusCode(StatusCodes.Status500InternalServerError);
+
+                newZip = new Zipcode();
+                newZip.Zip = _Zip.Zip;
+                newZip.City = _Zip.City;
+                newZip.State = _Zip.State;
+
+                _context.Add(newZip);
+
+                await _context.SaveChangesAsync();
+                trans.Commit();
+
+                return Ok(_Zip);
+            }
+            catch (Exception ex)
+            {
+                trans.Rollback();
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
-        public async Task<IActionResult> Put([FromBody] Zipcode _Item)
+        [HttpPut]
+        public async Task<IActionResult> Put([FromBody] Zipcode _Zip)
         {
-            throw new NotImplementedException();
+            bool exists = false;
+            var trans = _context.Database.BeginTransaction();
+            try
+            {
+                var existZip = await _context.Zipcodes.Where(x => x.Zip == _Zip.Zip).FirstOrDefaultAsync();
+
+                if (existZip == null)
+                    existZip = new Zipcode();
+                else
+                    exists = true;
+
+                existZip.Zip = _Zip.Zip;
+                existZip.City = _Zip.City;
+                existZip.State = _Zip.State;
+                
+                if (exists)
+                    _context.Update(existZip);
+                else
+                    _context.Add(existZip);
+
+                await _context.SaveChangesAsync();
+                trans.Commit();
+
+                return Ok(_Zip);
+            }
+            catch (Exception ex)
+            {
+                trans.Rollback();
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
         //NOT IMPLEMENTED BECAUSE ZIP IS A STRING
