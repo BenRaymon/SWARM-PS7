@@ -33,9 +33,15 @@ namespace SWARM.Server.Controllers.Application
                                     && x.GradeTypeCode == pGTC && x.GradeCodeOccurrence == pGCO)
                                 .FirstOrDefaultAsync();
 
+                if(itmGrade == null)
+                {
+                    trans.Rollback();
+                    return StatusCode(StatusCodes.Status404NotFound);
+                }
+
                 _context.Remove(itmGrade);
                 await _context.SaveChangesAsync();
-                //trans.Commit();
+                trans.Commit();
                 return Ok();
             }
             catch (Exception ex)
@@ -54,23 +60,34 @@ namespace SWARM.Server.Controllers.Application
                                     && x.GradeTypeCode == pGTC && x.GradeCodeOccurrence == pGCO)
                                 .FirstOrDefaultAsync();
 
-            return Ok(itmGrade);
+            if(itmGrade == null)
+                return StatusCode(StatusCodes.Status404NotFound);
+            else
+                return Ok(itmGrade);
         }
 
         [HttpGet]
         [Route("GetGradesByStudent/{pStudentId}")]
         public async Task<IActionResult> GetByStudentId(int pStudentId)
         {
-            List<Grade> lstGrades = await _context.Grades.Where(x => x.StudentId == pStudentId).ToListAsync();
-            return Ok(lstGrades);
+            List<Grade> lstGrades = await _context.Grades.Where(x => x.StudentId == pStudentId).OrderBy(x => x.StudentId).ToListAsync();
+            
+            if(lstGrades.Count == 0)
+                return StatusCode(StatusCodes.Status404NotFound);
+            else
+                return Ok(lstGrades);
         }
 
         [HttpGet]
         [Route("GetGradesBySection/{pSectionId}")]
         public async Task<IActionResult> GetBySectionId(int pSectionId)
         {
-            List<Grade> lstGrades = await _context.Grades.Where(x => x.SectionId == pSectionId).ToListAsync();
-            return Ok(lstGrades);
+            List<Grade> lstGrades = await _context.Grades.Where(x => x.SectionId == pSectionId).OrderBy(x => x.SectionId).ToListAsync();
+            
+            if (lstGrades.Count == 0)
+                return StatusCode(StatusCodes.Status404NotFound);
+            else
+                return Ok(lstGrades);
         }
 
         [HttpGet]
@@ -80,7 +97,11 @@ namespace SWARM.Server.Controllers.Application
             List<Grade> lstGrades = await _context.Grades
                                         .Where(x => x.StudentId == pStudentId && x.SectionId == pSectionId)
                                         .ToListAsync();
-            return Ok(lstGrades);
+            
+            if (lstGrades.Count == 0)
+                return StatusCode(StatusCodes.Status404NotFound);
+            else
+                return Ok(lstGrades);
         }
 
         [HttpGet]
@@ -91,14 +112,84 @@ namespace SWARM.Server.Controllers.Application
             return Ok(lstGrades);
         }
 
-        public Task<IActionResult> Post([FromBody] Grade _Item)
+        [HttpPut]
+        public async Task<IActionResult> Put([FromBody] Grade _Grade)
         {
-            throw new NotImplementedException();
+            bool exists = false;
+            var trans = _context.Database.BeginTransaction();
+            try
+            {
+                var existGrade = await _context.Grades
+                                .Where(x => x.StudentId == _Grade.StudentId && x.SectionId == _Grade.SectionId
+                                    && x.GradeTypeCode == _Grade.GradeTypeCode && x.GradeCodeOccurrence == _Grade.GradeCodeOccurrence)
+                                .FirstOrDefaultAsync();
+
+                if (existGrade == null)
+                    existGrade = new Grade();
+                else
+                    exists = true;
+
+                existGrade.StudentId = _Grade.StudentId;
+                existGrade.SectionId = _Grade.SectionId;
+                existGrade.SchoolId = _Grade.SchoolId;
+                existGrade.GradeCodeOccurrence = _Grade.GradeCodeOccurrence;
+                existGrade.GradeTypeCode = _Grade.GradeTypeCode;
+                existGrade.NumericGrade = _Grade.NumericGrade;
+                existGrade.Comments = _Grade.Comments;
+
+                if (exists)
+                    _context.Update(existGrade);
+                else
+                    _context.Add(existGrade);
+
+                await _context.SaveChangesAsync();
+                trans.Commit();
+
+                return Ok(existGrade);
+            }
+            catch (Exception ex)
+            {
+                trans.Rollback();
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
-        public Task<IActionResult> Put([FromBody] Grade _Item)
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody] Grade _Grade)
         {
-            throw new NotImplementedException();
+            var trans = _context.Database.BeginTransaction();
+            try
+            {
+                var newGrade = await _context.Grades
+                                .Where(x => x.StudentId == _Grade.StudentId && x.SectionId == _Grade.SectionId
+                                    && x.GradeTypeCode == _Grade.GradeTypeCode && x.GradeCodeOccurrence == _Grade.GradeCodeOccurrence)
+                                .FirstOrDefaultAsync();
+
+                if (newGrade != null)
+                    return StatusCode(StatusCodes.Status500InternalServerError);
+
+                newGrade = new Grade();
+
+                newGrade.StudentId = _Grade.StudentId;
+                newGrade.SectionId = _Grade.SectionId;
+                newGrade.SchoolId = _Grade.SchoolId;
+                newGrade.GradeCodeOccurrence = _Grade.GradeCodeOccurrence;
+                newGrade.GradeTypeCode = _Grade.GradeTypeCode;
+                newGrade.NumericGrade = _Grade.NumericGrade;
+                newGrade.Comments = _Grade.Comments;
+
+                _context.Add(newGrade);
+
+                await _context.SaveChangesAsync();
+                trans.Commit();
+
+                return Ok(newGrade);
+            }
+            catch (Exception ex)
+            {
+                trans.Rollback();
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
         //NOT IMPLEMENTED BECAUSE COMPOSITE PK
