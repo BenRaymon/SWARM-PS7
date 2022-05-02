@@ -1,21 +1,13 @@
-﻿using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using SWARM.EF.Data;
 using SWARM.EF.Models;
 using SWARM.Server.Controllers.Base;
-using SWARM.Server.Models;
-using SWARM.Shared;
-using SWARM.Shared.DTO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
-using Telerik.DataSource;
 using Telerik.DataSource.Extensions;
 
 namespace SWARM.Server.Controllers.Application
@@ -34,7 +26,7 @@ namespace SWARM.Server.Controllers.Application
         [Route("GetCourses")]
         public async Task<IActionResult> Get()
         {
-            List<Course> lstCourses = await _context.Courses.ToListAsync();
+            List<Course> lstCourses = await _context.Courses.OrderBy(x => x.CourseNo).ToListAsync();
             return Ok(lstCourses);
         }
 
@@ -43,12 +35,14 @@ namespace SWARM.Server.Controllers.Application
         public async Task<IActionResult> Get(int pCourseNo)
         {
             Course itmCourse = await _context.Courses.Where(x => x.CourseNo == pCourseNo).FirstOrDefaultAsync();
-            return Ok(itmCourse);
+            if(itmCourse == null)
+                return StatusCode(StatusCodes.Status404NotFound);
+            else
+                return Ok(itmCourse);
         }
 
         [HttpDelete]
         [Route("DeleteCourse/{pCourseNo}")]
-        //NEED TO TEST
         public async Task<IActionResult> Delete(int pCourseNo)
         {
             var trans = _context.Database.BeginTransaction();
@@ -75,9 +69,16 @@ namespace SWARM.Server.Controllers.Application
 
 
                 Course itmCourse = await _context.Courses.Where(x => x.CourseNo == pCourseNo).FirstOrDefaultAsync();
+                
+                if(itmCourse == null)
+                {
+                    trans.Rollback();
+                    return StatusCode(StatusCodes.Status404NotFound);
+                }
+                
                 _context.Remove(itmCourse);
                 await _context.SaveChangesAsync();
-                //trans.Commit();
+                trans.Commit();
                 return Ok();
             }
             catch (Exception ex)
@@ -90,7 +91,6 @@ namespace SWARM.Server.Controllers.Application
 
 
         [HttpPost]
-        //NEED TO TEST
         public async Task<IActionResult> Post([FromBody] Course _Course)
         {
             var trans = _context.Database.BeginTransaction();
@@ -114,7 +114,7 @@ namespace SWARM.Server.Controllers.Application
                 await _context.SaveChangesAsync();
                 trans.Commit();
 
-                return Ok(_Course.CourseNo);
+                return Ok(_Course);
             }
             catch (Exception ex)
             {
@@ -124,7 +124,6 @@ namespace SWARM.Server.Controllers.Application
         }
 
         [HttpPut]
-        //NEED TO TEST
         public async Task<IActionResult> Put([FromBody] Course _Course)
         {
             bool exists = false;
@@ -135,7 +134,7 @@ namespace SWARM.Server.Controllers.Application
 
                 if (existCourse == null)
                     existCourse = new Course();
-                else
+                 else
                     exists = true;
 
                 existCourse.Cost = _Course.Cost;
@@ -152,7 +151,7 @@ namespace SWARM.Server.Controllers.Application
                 await _context.SaveChangesAsync();
                 trans.Commit();
 
-                return Ok(_Course.CourseNo);
+                return Ok(_Course);
             }
             catch (Exception ex)
             {

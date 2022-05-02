@@ -29,6 +29,12 @@ namespace SWARM.Server.Controllers.Application
             {
                 Student itmStudent = await _context.Students.Where(x => x.StudentId == pStudentId).FirstOrDefaultAsync();
 
+                if(itmStudent == null)
+                {
+                    trans.Rollback();
+                    return StatusCode(StatusCodes.Status404NotFound);
+                }
+
                 var enrollment = await _context.Enrollments
                     .Where(x => x.StudentId == pStudentId).ToListAsync();
                 foreach (var enr in enrollment)
@@ -54,7 +60,10 @@ namespace SWARM.Server.Controllers.Application
         public async Task<IActionResult> Get(int pStudentId)
         {
             Student itmStudent = await _context.Students.Where(x => x.StudentId == pStudentId).FirstOrDefaultAsync();
-            return Ok(itmStudent);
+            if(itmStudent == null)
+                return StatusCode(StatusCodes.Status404NotFound);
+            else
+                return Ok(itmStudent);
         }
 
 
@@ -62,7 +71,7 @@ namespace SWARM.Server.Controllers.Application
         [Route("GetStudents")]
         public async Task<IActionResult> Get()
         {
-            List<Student> lstStudents = await _context.Students.ToListAsync();
+            List<Student> lstStudents = await _context.Students.OrderBy(x=> x.StudentId).ToListAsync();
             return Ok(lstStudents);
         }
 
@@ -94,7 +103,7 @@ namespace SWARM.Server.Controllers.Application
                 await _context.SaveChangesAsync();
                 trans.Commit();
 
-                return Ok(_Student.StudentId);
+                return Ok(_Student);
             } 
             catch (Exception ex)
             {
@@ -135,7 +144,7 @@ namespace SWARM.Server.Controllers.Application
                 await _context.SaveChangesAsync();
                 trans.Commit();
 
-                return Ok(_Student.StudentId);
+                return Ok(_Student);
             }
             catch (Exception ex)
             {

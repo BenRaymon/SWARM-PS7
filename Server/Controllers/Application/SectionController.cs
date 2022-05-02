@@ -29,13 +29,19 @@ namespace SWARM.Server.Controllers.Application
             {
                 Section itmSection = await _context.Sections.Where(x => x.SectionId == pSectionId).FirstOrDefaultAsync();
                 
+                if(itmSection == null)
+                {
+                    trans.Rollback();
+                    return StatusCode(StatusCodes.Status404NotFound);
+                }
+
                 DeleteEnrollments(itmSection);
                 DeleteGrades(itmSection);
                 DeleteGradeTypeWeights(itmSection);
                 
                 _context.Remove(itmSection);
                 await _context.SaveChangesAsync();
-                //trans.Commit();
+                trans.Commit();
                 return Ok();
             }
             catch (Exception ex)
@@ -50,27 +56,33 @@ namespace SWARM.Server.Controllers.Application
         public async Task<IActionResult> Get(int pSectionId)
         {
             Section itmSection = await _context.Sections.Where(x => x.SectionId == pSectionId).FirstOrDefaultAsync();
-            return Ok(itmSection);
+    
+            if (itmSection == null)
+                return StatusCode(StatusCodes.Status404NotFound);
+            else
+                return Ok(itmSection);
         }
 
         [HttpGet]
-        [Route("GetSections/{pCourseNo}")]
+        [Route("GetSectionsByCourse/{pCourseNo}")]
         public async Task<IActionResult> GetSectionsByCourse(int pCourseNo)
         {
-            List<Section> lstSections = await _context.Sections.Where(x => x.CourseNo == pCourseNo).ToListAsync();
-            return Ok(lstSections);
+            List<Section> lstSections = await _context.Sections.Where(x => x.CourseNo == pCourseNo).OrderBy(x=>x.CourseNo).ToListAsync();
+            if (lstSections.Count == 0)
+                return StatusCode(StatusCodes.Status404NotFound);
+            else
+                return Ok(lstSections);
         }
 
         [HttpGet]
         [Route("GetSections")]
         public async Task<IActionResult> Get()
         {
-            List<Section> lstSections = await _context.Sections.ToListAsync();
+            List<Section> lstSections = await _context.Sections.OrderBy(x => x.SectionId).ToListAsync();
             return Ok(lstSections);
         }
 
         [HttpPost]
-        //NEED TO TEST
         public async Task<IActionResult> Post([FromBody] Section _Section)
         {
             var trans = _context.Database.BeginTransaction();
@@ -96,7 +108,7 @@ namespace SWARM.Server.Controllers.Application
                 await _context.SaveChangesAsync();
                 trans.Commit();
 
-                return Ok(_Section.SectionId);
+                return Ok(_Section);
             }
             catch (Exception ex)
             {
@@ -106,7 +118,6 @@ namespace SWARM.Server.Controllers.Application
         }
 
         [HttpPut]
-        //NEED TO TEST
         public async Task<IActionResult> Put([FromBody] Section _Section)
         {
             bool exists = false;
@@ -136,7 +147,7 @@ namespace SWARM.Server.Controllers.Application
                 await _context.SaveChangesAsync();
                 trans.Commit();
 
-                return Ok(_Section.SectionId);
+                return Ok(_Section);
             }
             catch (Exception ex)
             {

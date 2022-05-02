@@ -32,11 +32,17 @@ namespace SWARM.Server.Controllers.Application
                                         .Where(x => x.StudentId == pStudentId && x.SectionId == pSectionId)
                                         .FirstOrDefaultAsync();
 
+                if(itmEnr == null)
+                {
+                    trans.Rollback();
+                    return StatusCode(StatusCodes.Status404NotFound);
+                }
+
                 DeleteGrades(pStudentId, pSectionId);
 
                 _context.Remove(itmEnr);
                 await _context.SaveChangesAsync();
-                //trans.Commit();
+                trans.Commit();
                 return Ok();
             }
             catch (Exception ex)
@@ -53,15 +59,32 @@ namespace SWARM.Server.Controllers.Application
             Enrollment itmEnr = await _context.Enrollments
                                     .Where(x => x.StudentId == pStudentId && x.SectionId == pSectionId)
                                     .FirstOrDefaultAsync();
-            return Ok(itmEnr);
+            if(itmEnr == null)
+                return StatusCode(StatusCodes.Status404NotFound);
+            else
+                return Ok(itmEnr);
         }
 
         [HttpGet]
         [Route("GetEnrollmentsByStudent/{pStudentId}")]
         public async Task<IActionResult> GetByStudentId(int pStudentId)
         {
-            List<Enrollment> lstEnrollments = await _context.Enrollments.Where(x => x.StudentId == pStudentId).ToListAsync();
-            return Ok(lstEnrollments);
+            List<Enrollment> lstEnrollments = await _context.Enrollments.Where(x => x.StudentId == pStudentId).OrderBy(x => x.StudentId).ToListAsync();
+            if(lstEnrollments.Count == 0)
+                return StatusCode(StatusCodes.Status404NotFound);
+            else
+                return Ok(lstEnrollments);
+        }
+
+        [HttpGet]
+        [Route("GetEnrollmentsBySection/{pSectionId}")]
+        public async Task<IActionResult> GetBySectionId(int pSectionId)
+        {
+            List<Enrollment> lstEnrollments = await _context.Enrollments.Where(x => x.SectionId == pSectionId).OrderBy(x => x.SectionId).ToListAsync();
+            if (lstEnrollments.Count == 0)
+                return StatusCode(StatusCodes.Status404NotFound);
+            else
+                return Ok(lstEnrollments);
         }
 
         [HttpGet]
@@ -98,7 +121,7 @@ namespace SWARM.Server.Controllers.Application
                 await _context.SaveChangesAsync();
                 trans.Commit();
 
-                return Ok(_Enrollment.StudentId);
+                return Ok(_Enrollment);
             }
             catch (Exception ex)
             {
@@ -138,7 +161,7 @@ namespace SWARM.Server.Controllers.Application
                 await _context.SaveChangesAsync();
                 trans.Commit();
 
-                return Ok(_Enrollment.StudentId);
+                return Ok(_Enrollment);
             }
             catch (Exception ex)
             {
